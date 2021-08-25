@@ -21,4 +21,4 @@ sprinter-old.o: sprinter.c
 	$(CC) -DFOR_OLDER=1 $(CFLAGS) -o $@ -c $<
 
 clean:
-	rm -f $(TARGET) $(OBJS)
+	rm -f $(TARGET) $(OBJS) $(TARGETOLD) $(OBJSOLD)
