@@ -26,7 +26,7 @@ for ver in $ALL; do
         # create a build directory
         mkdir $ver && cd $ver
         # configure it
-        CFLAGS=../configure --prefix=$pwd/build/$ver --with-ssl
+        ../configure --prefix=$pwd/build/$ver --with-ssl
         # build and install
         make -sj7 && make install
         # remove the build directory again
