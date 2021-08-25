@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
     if(still_running) {
       /* wait for activity, timeout or "nothing" */
-#if CURL_AT_LEAST_VERSION(7, 66, 0)
+#if (CURL_AT_LEAST_VERSION(7, 66, 0)) && !defined(FOR_OLDER)
       mc = curl_multi_poll(multi_handle, NULL, 0, 1000, NULL);
 #else
       /* should be mostly okay */
