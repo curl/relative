@@ -27,6 +27,10 @@
 #include <unistd.h>
 #include <curl/curl.h>
 
+#if !CURL_AT_LEAST_VERSION(7, 28, 0)
+#error "this code needs libcurl 7.28.0 or later"
+#endif
+
 #define MAXPARALLEL 500 /* max parallelism */
 #define NPARALLEL 100  /* Default number of concurrent transfers */
 #define NTOTAL 100000  /* Default number of transfers in total */
@@ -125,10 +129,15 @@ int main(int argc, char **argv)
   do {
     CURLMcode mc = curl_multi_perform(multi_handle, &still_running);
 
-    if(still_running)
+    if(still_running) {
       /* wait for activity, timeout or "nothing" */
+#if CURL_AT_LEAST_VERSION(7, 66, 0)
       mc = curl_multi_poll(multi_handle, NULL, 0, 1000, NULL);
-
+#else
+      /* should be mostly okay */
+      mc = curl_multi_wait(multi_handle, NULL, 0, 1000, NULL);
+#endif
+    }
     if(mc)
       break;
 
