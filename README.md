@@ -1,6 +1,24 @@
 # relative
 Tools to measure libcurl performance delta between versions
 
+## build-many
+
+This script iterates over all the curl versions listed in the top of the file
+and for each version it will build and install it locally. It will clone the
+git repository first if not present.
+
+Each built libcurl version is installed in `build/$version`. The used build
+directory will be removed after install.
+
+## run-many
+
+This script iterates over all the libcurl versions found installed in
+`build/$version`. For each such version, it will set `LD_LIBRARY_PATH` and
+then invoke `./sprinter` to have that specific version performance tested.
+
+If the found libcurl version is older than 7.66.0, the `./sprinter-old` tool
+will instead be used (to use a different API).
+
 ## sprinter
 
 Downloads the same URL a given number of times, using a single thread and the
