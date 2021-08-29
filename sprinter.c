@@ -57,6 +57,7 @@ static LARGE_INTEGER tool_freq;
 #define MAXPARALLEL 500 /* max parallelism */
 #define NPARALLEL 100  /* Default number of concurrent transfers */
 #define NTOTAL 100000  /* Default number of transfers in total */
+#define RESPCODE 200   /* Default expected response code from server */
 
 size_t downloaded;
 
@@ -107,6 +108,7 @@ int main(int argc, char **argv)
   const char *url;
   int ntotal = NTOTAL;
   int nparallel = NPARALLEL;
+  int expected_respcode = RESPCODE;
 
 #ifdef _WIN32
   QueryPerformanceFrequency(&tool_freq);
@@ -114,11 +116,12 @@ int main(int argc, char **argv)
 
   if(argc < 2) {
     printf("curl sprinter version %s\n"
-           "Usage: sprinter <URL> [total] [parallel]\n"
+           "Usage: sprinter <URL> [total] [parallel] [respcode]\n"
            " <URL> will be downloaded\n"
            " [total] number of times (default %d) using\n"
-           " [parallel] simultaneous transfers (default %d)\n",
-           SPRINTER_VERSION, NTOTAL, NPARALLEL);
+           " [parallel] simultaneous transfers (default %d)\n"
+           " [respcode] expected response code from server (default %d)\n",
+           SPRINTER_VERSION, NTOTAL, NPARALLEL, RESPCODE);
     return 1;
   }
 
@@ -127,6 +130,8 @@ int main(int argc, char **argv)
     ntotal = atoi(argv[2]);
   if(argc > 3)
     nparallel = atoi(argv[3]);
+  if(argc > 4)
+    expected_respcode = atoi(argv[4]);
   if(nparallel > ntotal)
     nparallel = ntotal;
   if(nparallel > MAXPARALLEL)
@@ -179,15 +184,21 @@ int main(int argc, char **argv)
 
     /* See how the transfers went */
     while((msg = curl_multi_info_read(multi_handle, &msgs_left))) {
-      CURL *e;
       if(msg->msg == CURLMSG_DONE) {
+        CURL *e = msg->easy_handle;
+        long respcode;
         /* anything but CURLE_OK here disqualifies this entire round */
         if(msg->data.result) {
           fprintf(stderr, "Transfer returned %d!\n", msg->data.result);
           return 2;
         }
+        if(curl_easy_getinfo(e, CURLINFO_RESPONSE_CODE, &respcode) ||
+           expected_respcode != respcode) {
+          fprintf(stderr, "Transfer returned unexpected response code %d!\n",
+                  respcode);
+          return 2;
+        }
         total--;
-        e = msg->easy_handle;
         curl_multi_remove_handle(multi_handle, e);
         if(add) {
           /* add it back in to get it restarted */
