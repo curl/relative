@@ -179,15 +179,25 @@ int main(int argc, char **argv)
 
     /* See how the transfers went */
     while((msg = curl_multi_info_read(multi_handle, &msgs_left))) {
-      CURL *e;
       if(msg->msg == CURLMSG_DONE) {
+        CURL *e = msg->easy_handle;
+        long httpcode = -1;
+        static long first_httpcode = -1;
         /* anything but CURLE_OK here disqualifies this entire round */
         if(msg->data.result) {
           fprintf(stderr, "Transfer returned %d!\n", msg->data.result);
           return 2;
         }
+        /* if the transfers do not all have the same http code then abort */
+        if(curl_easy_getinfo(e, CURLINFO_RESPONSE_CODE, &httpcode) ||
+           (first_httpcode >= 0 && (first_httpcode != httpcode))) {
+          fprintf(stderr, "httpcode differs between transfers: %d != %d!\n",
+                  first_httpcode, httpcode);
+          return 2;
+        }
+        if(first_httpcode < 0)
+          first_httpcode = httpcode;
         total--;
-        e = msg->easy_handle;
         curl_multi_remove_handle(multi_handle, e);
         if(add) {
           /* add it back in to get it restarted */
