@@ -10,9 +10,10 @@ ALL=`ls`;
 
 cd $pwd
 for ver in $ALL; do
+    major=`echo $ver | cut -d. -f1`;
     minor=`echo $ver | cut -d. -f2`;
     SPRINTER=./sprinter
-    if test "$minor" -lt 66; then
+    if test "$major" = 7 && test "$minor" -lt 66; then
         SPRINTER=./sprinter-old
     fi
     if ! test -x $SPRINTER; then
